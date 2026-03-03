@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microscopy-sr"
+version = "0.1.0"
+description = "Few-shot uncertainty-aware diffusion super-resolution scaffold for microscopy"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.1.0",
+  "torchvision>=0.16.0",
+  "pillow>=10.0.0",
+  "pyyaml>=6.0.0",
+  "tqdm>=4.66.0",
+  "lpips>=0.1.4"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

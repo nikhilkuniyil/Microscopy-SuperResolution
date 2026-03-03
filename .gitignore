@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Checkpoints and outputs (large files)
+checkpoints/
+outputs/
+
+# Data
+images/
+
+# macOS
+.DS_Store
+
+# IDE / Claude
+.claude/
+.venv/

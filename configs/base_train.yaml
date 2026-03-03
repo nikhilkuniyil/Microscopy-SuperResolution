@@ -1,0 +1,24 @@
+seed: 42
+
+data:
+  root_dir: images
+  train_ratio: 0.9
+  patch_size: 128
+  upscale_factor: 4
+
+model:
+  base_channels: 64
+  t_dim: 256
+
+diffusion:
+  timesteps: 1000
+  beta_start: 0.0001
+  beta_end: 0.02
+
+train:
+  batch_size: 8
+  num_workers: 0
+  lr: 0.0002
+  weight_decay: 0.0001
+  epochs: 100
+  checkpoint_dir: checkpoints/base
