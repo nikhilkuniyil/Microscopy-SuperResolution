@@ -1,4 +1,4 @@
-# ECE 285 Project Base Code
+# Uncertainty-Aware Few-Shot Super-Resolution via Conditional Diffusion Models with Low-Rank Adaptation
 
 Base scaffold for the proposal: **uncertainty-aware few-shot diffusion super-resolution for microscopy images**.
 
