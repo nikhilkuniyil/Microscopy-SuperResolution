@@ -146,6 +146,8 @@ def main() -> None:
                         help="Number of MC posterior samples (M in the proposal)")
     parser.add_argument("--bicubic_baseline", action="store_true",
                         help="Also compute and print bicubic baseline metrics")
+    parser.add_argument("--out_json", default=None,
+                        help="Save results dict to this JSON file")
     args = parser.parse_args()
 
     cfg = load_yaml(args.config)
@@ -176,6 +178,14 @@ def main() -> None:
         results.append(evaluate_bicubic(loader, device))
     results.append(evaluate_model(model, diffusion, loader, args.n_samples, device, label=args.label))
     print_table(results)
+
+    if args.out_json:
+        import json
+        from pathlib import Path
+        Path(args.out_json).parent.mkdir(parents=True, exist_ok=True)
+        with open(args.out_json, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"Results saved to {args.out_json}")
 
 
 if __name__ == "__main__":
