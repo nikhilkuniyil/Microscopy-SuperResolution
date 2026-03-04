@@ -24,11 +24,18 @@ class MicroscopySuperResolutionDataset(Dataset):
         self.upscale_factor = upscale_factor
         self.patch_size = patch_size
         self.to_tensor = T.ToTensor()
-        self.crop = T.CenterCrop((patch_size, patch_size))
+        self.crop = (
+            T.RandomCrop((patch_size, patch_size))
+            if split == "train"
+            else T.CenterCrop((patch_size, patch_size))
+        )
 
         image_paths = []
-        for ext in ("*.tif", "*.tiff", "*.png", "*.jpg", "*.jpeg"):
-            image_paths.extend(self.root_dir.rglob(ext))
+        for ext in ("*.tif", "*.tiff", "*.png", "*.jpg", "*.jpeg", "*.dib", "*.DIB"):
+            image_paths.extend(
+                p for p in self.root_dir.rglob(ext)
+                if "masks" not in p.parts
+            )
         image_paths = sorted(image_paths)
 
         if not image_paths:

@@ -1,7 +1,7 @@
 seed: 42
 
 data:
-  root_dir: images
+  root_dir: data/base
   train_ratio: 0.9
   patch_size: 128
   upscale_factor: 4
@@ -16,9 +16,9 @@ diffusion:
   beta_end: 0.02
 
 train:
-  batch_size: 8
-  num_workers: 0
+  batch_size: 16
+  num_workers: 4
   lr: 0.0002
   weight_decay: 0.0001
-  epochs: 100
+  epochs: 1000
   checkpoint_dir: checkpoints/base
