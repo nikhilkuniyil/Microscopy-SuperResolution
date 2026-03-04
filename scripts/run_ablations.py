@@ -5,7 +5,7 @@ Ablation sweep: runs all baselines and K-sweeps described in the proposal.
 
 Usage:
     python scripts/run_ablations.py \
-        --base_ckpt checkpoints/base/epoch_099.pt \
+        --base_ckpt checkpoints/base/best.pt \
         --config_ft configs/fewshot_finetune.yaml \
         --config_eval configs/sample_uncertainty.yaml
 

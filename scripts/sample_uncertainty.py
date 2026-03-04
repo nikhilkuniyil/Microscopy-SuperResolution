@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from microscopy_sr.data import MicroscopySuperResolutionDataset
 from microscopy_sr.diffusion import SRDiffusion
 from microscopy_sr.eval import denorm, save_image
-from microscopy_sr.models import ConditionalUNet
+from microscopy_sr.models import ConditionalUNet, apply_lora_to_model
 from microscopy_sr.utils.config import load_yaml
 
 
@@ -26,6 +26,8 @@ def save_uncertainty_map(std_map: torch.Tensor, out_path: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="configs/sample_uncertainty.yaml")
+    parser.add_argument("--lora", action="store_true",
+                        help="Set if checkpoint was saved with LoRA weights")
     args = parser.parse_args()
 
     cfg = load_yaml(args.config)
@@ -49,6 +51,9 @@ def main() -> None:
     ).to(device)
 
     state = torch.load(cfg["sample"]["checkpoint"], map_location=device)
+    if args.lora:
+        lora_cfg = state.get("lora", {})
+        apply_lora_to_model(model, rank=lora_cfg.get("rank", 4), alpha=lora_cfg.get("alpha", 1.0))
     model.load_state_dict(state["model"], strict=True)
     model.eval()
 
