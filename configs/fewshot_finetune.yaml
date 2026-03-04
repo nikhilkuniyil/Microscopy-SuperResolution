@@ -21,7 +21,7 @@ lora:
   alpha: 1.0
 
 train:
-  base_checkpoint: checkpoints/base/epoch_099.pt
+  base_checkpoint: checkpoints/base/best.pt
   batch_size: 4
   num_workers: 0
   lr: 0.00005
