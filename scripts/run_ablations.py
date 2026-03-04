@@ -81,6 +81,7 @@ def main() -> None:
             "--config", args.config_ft,
             "--k", str(k),
             "--out_name", lora_stem,
+            "--out_dir", args.ft_dir,
         ])
         run([
             py, "scripts/evaluate.py",
@@ -99,6 +100,7 @@ def main() -> None:
             "--config", args.config_ft,
             "--k", str(k),
             "--out_name", fullft_stem,
+            "--out_dir", args.ft_dir,
             "--full_ft",
         ])
         run([

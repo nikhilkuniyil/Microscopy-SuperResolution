@@ -23,6 +23,8 @@ def main() -> None:
                         help="Checkpoint filename stem (e.g. lora_k20). Auto-generated if omitted.")
     parser.add_argument("--full_ft", action="store_true",
                         help="Full fine-tune (all params); default is LoRA adaptation")
+    parser.add_argument("--out_dir", type=str, default=None,
+                        help="Override checkpoint output directory from config")
     args = parser.parse_args()
 
     cfg = load_yaml(args.config)
@@ -103,7 +105,7 @@ def main() -> None:
         if step % 50 == 0 or step == total_iters - 1:
             print(f"  step={step}/{total_iters}  loss={loss.item():.6f}")
 
-    out_dir = cfg["train"].get("checkpoint_dir", "checkpoints/fewshot")
+    out_dir = args.out_dir or cfg["train"].get("checkpoint_dir", "checkpoints/fewshot")
     os.makedirs(out_dir, exist_ok=True)
     ckpt_path = f"{out_dir}/{stem}.pt"
 
