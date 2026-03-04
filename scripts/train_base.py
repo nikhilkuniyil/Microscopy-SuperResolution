@@ -5,7 +5,7 @@ from pathlib import Path
 
 import torch
 
-from microscopy_sr.train import build_loaders, build_system, run_epoch
+from microscopy_sr.train import build_loaders, build_system, maybe_load_checkpoint, run_epoch
 from microscopy_sr.utils.config import load_yaml
 from microscopy_sr.utils.seed import set_seed
 
@@ -13,6 +13,8 @@ from microscopy_sr.utils.seed import set_seed
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="configs/base_train.yaml")
+    parser.add_argument("--resume", default=None,
+                        help="Path to checkpoint to resume from (default: auto-detect latest.pt)")
     args = parser.parse_args()
 
     cfg = load_yaml(args.config)
@@ -23,12 +25,19 @@ def main() -> None:
     model, diffusion, optimizer = build_system(cfg, device)
     print(f"Model params: {sum(p.numel() for p in model.parameters()):,}")
 
-    best_val = float("inf")
     epochs = cfg["train"].get("epochs", 10)
     out_dir = Path(cfg["train"].get("checkpoint_dir", "checkpoints/base"))
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    for epoch in range(epochs):
+    # Auto-detect latest.pt if --resume not specified
+    resume_path = args.resume or (str(out_dir / "latest.pt") if (out_dir / "latest.pt").exists() else None)
+    start_epoch = maybe_load_checkpoint(model, optimizer, resume_path, device)
+    if resume_path:
+        print(f"Resumed from {resume_path}, starting at epoch {start_epoch}")
+
+    best_val = float("inf")
+
+    for epoch in range(start_epoch, epochs):
         train_loss = run_epoch(model, diffusion, train_loader, optimizer, device, train=True)
         val_loss = run_epoch(model, diffusion, val_loader, optimizer, device, train=False)
         print(f"epoch={epoch} train_loss={train_loss:.6f} val_loss={val_loss:.6f}")
