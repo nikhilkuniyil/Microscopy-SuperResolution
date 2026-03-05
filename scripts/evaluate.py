@@ -67,6 +67,8 @@ def evaluate_model(
     n_samples: int,
     device: torch.device,
     label: str,
+    ddim_steps: int = 50,
+    eta: float = 1.0,
 ) -> dict:
     psnr_vals, ssim_vals, lpips_vals, cal_vals, mu_vals = [], [], [], [], []
 
@@ -76,8 +78,7 @@ def evaluate_model(
 
         # MC sampling: (M, 1, 1, H, W)
         samples_5d = mc_sample(diffusion, lr, hr.shape, n_samples,
-                               ddim_steps=cfg.get("sample", {}).get("ddim_steps", 50),
-                               eta=cfg.get("sample", {}).get("eta", 1.0))
+                               ddim_steps=ddim_steps, eta=eta)
         # Remove batch dim: (M, 1, H, W)
         samples = samples_5d.squeeze(1)
 
@@ -177,10 +178,14 @@ def main() -> None:
         beta_end=cfg["diffusion"].get("beta_end", 2e-2),
     ).to(device)
 
+    ddim_steps = cfg.get("sample", {}).get("ddim_steps", 50)
+    eta = cfg.get("sample", {}).get("eta", 1.0)
+
     results = []
     if args.bicubic_baseline:
         results.append(evaluate_bicubic(loader, device))
-    results.append(evaluate_model(model, diffusion, loader, args.n_samples, device, label=args.label))
+    results.append(evaluate_model(model, diffusion, loader, args.n_samples, device,
+                                  label=args.label, ddim_steps=ddim_steps, eta=eta))
     print_table(results)
 
     if args.out_json:
