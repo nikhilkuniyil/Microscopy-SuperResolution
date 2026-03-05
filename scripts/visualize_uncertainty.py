@@ -40,17 +40,50 @@ def apply_heatmap(arr: np.ndarray) -> np.ndarray:
     return np.stack([r, g, b], axis=-1)
 
 
+def wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_width: int) -> list[str]:
+    words = text.split()
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        candidate = word if not current else f"{current} {word}"
+        bbox = draw.textbbox((0, 0), candidate, font=font)
+        if bbox[2] - bbox[0] <= max_width:
+            current = candidate
+        else:
+            if current:
+                lines.append(current)
+            current = word
+    if current:
+        lines.append(current)
+    return lines or [text]
+
+
 def add_label(img: Image.Image, text: str, font_size: int = 14) -> Image.Image:
     w, h = img.size
-    label_h = font_size + 8
-    canvas = Image.new("RGB", (w, h + label_h), color=(30, 30, 30))
-    canvas.paste(img, (0, label_h))
-    draw = ImageDraw.Draw(canvas)
+    pad_x = 4
+    pad_y = 4
+    line_gap = 2
     try:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
     except Exception:
         font = ImageFont.load_default()
-    draw.text((4, 4), text, fill=(220, 220, 220), font=font)
+
+    probe = Image.new("RGB", (w, 32), color=(0, 0, 0))
+    probe_draw = ImageDraw.Draw(probe)
+    lines = wrap_text(probe_draw, text, font, max(16, w - 2 * pad_x))
+    line_h = probe_draw.textbbox((0, 0), "Ag", font=font)[3]
+    label_h = pad_y * 2 + len(lines) * line_h + (len(lines) - 1) * line_gap
+
+    canvas = Image.new("RGB", (w, h + label_h), color=(30, 30, 30))
+    canvas.paste(img, (0, label_h))
+    draw = ImageDraw.Draw(canvas)
+    y = pad_y
+    for line in lines:
+        bbox = draw.textbbox((0, 0), line, font=font)
+        line_w = bbox[2] - bbox[0]
+        x = (w - line_w) // 2
+        draw.text((x, y), line, fill=(220, 220, 220), font=font)
+        y += line_h + line_gap
     return canvas
 
 
