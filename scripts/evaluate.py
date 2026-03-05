@@ -52,9 +52,11 @@ def mc_sample(
     lr: torch.Tensor,
     hr_shape: tuple,
     n_samples: int,
+    ddim_steps: int = 50,
+    eta: float = 1.0,
 ) -> torch.Tensor:
     """Run n_samples independent reverse chains. Returns (M, B, C, H, W)."""
-    draws = [diffusion.sample(lr, shape=hr_shape) for _ in range(n_samples)]
+    draws = [diffusion.sample(lr, shape=hr_shape, ddim_steps=ddim_steps, eta=eta) for _ in range(n_samples)]
     return torch.stack(draws, dim=0)
 
 
@@ -73,7 +75,9 @@ def evaluate_model(
         hr = batch["hr"].to(device)   # (1, 1, H, W)
 
         # MC sampling: (M, 1, 1, H, W)
-        samples_5d = mc_sample(diffusion, lr, hr.shape, n_samples)
+        samples_5d = mc_sample(diffusion, lr, hr.shape, n_samples,
+                               ddim_steps=cfg.get("sample", {}).get("ddim_steps", 50),
+                               eta=cfg.get("sample", {}).get("eta", 1.0))
         # Remove batch dim: (M, 1, H, W)
         samples = samples_5d.squeeze(1)
 

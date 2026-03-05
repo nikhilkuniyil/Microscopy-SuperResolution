@@ -74,9 +74,11 @@ def main() -> None:
         lr = batch["lr"].to(device)
         hr = batch["hr"].to(device)
 
+        ddim_steps = cfg["sample"].get("ddim_steps", 50)
+        eta = cfg["sample"].get("eta", 1.0)
         draws = []
         for j in range(n_samples):
-            pred = diffusion.sample(lr, shape=hr.shape)
+            pred = diffusion.sample(lr, shape=hr.shape, ddim_steps=ddim_steps, eta=eta)
             draws.append(pred)
             save_image(pred[0], str(out_dir / f"sample_{i:03d}" / f"draw_{j:02d}.png"))
 

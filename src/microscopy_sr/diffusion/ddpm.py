@@ -34,23 +34,45 @@ class SRDiffusion:
         return F.mse_loss(noise_pred, noise)
 
     @torch.no_grad()
-    def sample(self, cond_lr: torch.Tensor, shape: tuple[int, int, int, int]) -> torch.Tensor:
+    def sample(
+        self,
+        cond_lr: torch.Tensor,
+        shape: tuple[int, int, int, int],
+        ddim_steps: int = 50,
+        eta: float = 0.0,
+    ) -> torch.Tensor:
+        """Sample using DDIM (Song et al. 2021) for fast inference.
+
+        Args:
+            ddim_steps: Number of denoising steps (default 50, vs 1000 for DDPM).
+                        Lower = faster but slightly lower quality.
+            eta: Stochasticity. 0.0 = deterministic DDIM, 1.0 = full DDPM noise.
+                 Use eta > 0 to preserve sample diversity for uncertainty estimation.
+        """
         device = cond_lr.device
         x = torch.randn(shape, device=device)
 
-        for step in reversed(range(self.timesteps)):
-            t = torch.full((shape[0],), step, device=device, dtype=torch.long)
+        # Select evenly-spaced subset of timesteps
+        step_indices = torch.linspace(0, self.timesteps - 1, ddim_steps + 1).long()
+        timesteps = step_indices.flip(0)  # T -> 0
+
+        for i in range(len(timesteps) - 1):
+            t_cur = timesteps[i].item()
+            t_prev = timesteps[i + 1].item()
+
+            t = torch.full((shape[0],), t_cur, device=device, dtype=torch.long)
             eps = self.model(x, cond_lr, t)
 
-            alpha_t = self.alphas[step]
-            alpha_bar_t = self.alpha_bars[step]
-            beta_t = self.betas[step]
+            alpha_bar_cur = self.alpha_bars[t_cur]
+            alpha_bar_prev = self.alpha_bars[t_prev] if t_prev >= 0 else torch.tensor(1.0, device=device)
 
-            mean = (x - (beta_t / torch.sqrt(1.0 - alpha_bar_t)) * eps) / torch.sqrt(alpha_t)
-            if step > 0:
-                noise = torch.randn_like(x)
-                x = mean + torch.sqrt(beta_t) * noise
-            else:
-                x = mean
+            # Predicted x0
+            x0_pred = (x - torch.sqrt(1.0 - alpha_bar_cur) * eps) / torch.sqrt(alpha_bar_cur)
+            x0_pred = x0_pred.clamp(-1.0, 1.0)
+
+            # DDIM update
+            sigma = eta * torch.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar_cur)) * torch.sqrt(1 - alpha_bar_cur / alpha_bar_prev)
+            noise = torch.randn_like(x) if eta > 0 else torch.zeros_like(x)
+            x = torch.sqrt(alpha_bar_prev) * x0_pred + torch.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps + sigma * noise
 
         return x.clamp(-1.0, 1.0)

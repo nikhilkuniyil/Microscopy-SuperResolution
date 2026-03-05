@@ -20,3 +20,5 @@ sample:
   n_examples: 8
   n_samples: 16
   output_dir: outputs/uncertainty
+  ddim_steps: 50
+  eta: 1.0
