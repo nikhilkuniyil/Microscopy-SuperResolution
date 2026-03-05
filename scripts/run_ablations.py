@@ -127,10 +127,22 @@ def main() -> None:
     py = sys.executable
 
     # ------------------------------------------------------------------ #
-    # 1. Bicubic baseline
+    # 1. Bicubic baseline (saved separately; no model inference needed)
     # ------------------------------------------------------------------ #
-    run_eval(py, args.config_eval, args.base_ckpt, "bicubic",
-             n_samples=1, results_dir=args.results_dir, bicubic_baseline=True)
+    json_path = f"{args.results_dir}/bicubic.json"
+    if Path(json_path).exists():
+        print(f"[skip] bicubic — results already exist at {json_path}")
+    else:
+        run([
+            py, "scripts/evaluate.py",
+            "--config", args.config_eval,
+            "--checkpoint", args.base_ckpt,
+            "--label", "bicubic",
+            "--n_samples", "1",
+            "--bicubic_baseline",
+            "--bicubic_only",
+            "--out_json", json_path,
+        ])
 
     # ------------------------------------------------------------------ #
     # 2. Base model — no adaptation

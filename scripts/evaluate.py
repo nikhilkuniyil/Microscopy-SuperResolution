@@ -151,6 +151,8 @@ def main() -> None:
                         help="Number of MC posterior samples (M in the proposal)")
     parser.add_argument("--bicubic_baseline", action="store_true",
                         help="Also compute and print bicubic baseline metrics")
+    parser.add_argument("--bicubic_only", action="store_true",
+                        help="Only run bicubic baseline, skip model evaluation")
     parser.add_argument("--out_json", default=None,
                         help="Save results dict to this JSON file")
     args = parser.parse_args()
@@ -184,8 +186,9 @@ def main() -> None:
     results = []
     if args.bicubic_baseline:
         results.append(evaluate_bicubic(loader, device))
-    results.append(evaluate_model(model, diffusion, loader, args.n_samples, device,
-                                  label=args.label, ddim_steps=ddim_steps, eta=eta))
+    if not args.bicubic_only:
+        results.append(evaluate_model(model, diffusion, loader, args.n_samples, device,
+                                      label=args.label, ddim_steps=ddim_steps, eta=eta))
     print_table(results)
 
     if args.out_json:
